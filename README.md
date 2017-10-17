@@ -2,10 +2,10 @@
 Arduino based device for temperature, air humidity and gas concentration measurment .
 
 ## Hardware
-PCB dimension is 70mm x 55mm. Schematics is available in two PDF files (BlueSensor_v1.1_PCB_top.pdf and BlueSensor_v1.1_PCB_top_miror.pdf). PCB can be manufactured with chemo transfer method; in that case mirror image should be used.
+PCB dimension is 70mm x 55mm. Schematics is available in two PDF files (BlueSensor_v1.1_PCB_top.pdf and BlueSensor_v1.1_PCB_top_miror.pdf). PCB can be manufactured with [chemo transfer method](https://www.youtube.com/watch?v=zZRHaZjGWq4) invented by Volk Darko. In that case mirror image should be used. Schematics has been drawn by Darko Volk.
 
 Needed materials:
-- 1x Arduino Nano
+- 1 x Arduino Nano
 - 2 x MQ2-x gas sensors*
 - 1 x DHT-22 (AM2302) humidity and temperature sensor
 - 2 x (max 4 x) DS12B20 temperature sensor (on a cable)
@@ -26,7 +26,7 @@ However this hardware is not supported in a current code yet.
 MQ-x gas sensor are cheap sensors for detecting leakage of various gases: 
 - MQ-2: combustible gases
 - MQ-3: alcohol
-- MQ-4: CH4，natural gas
+- MQ-4: CH4， natural gas
 - MQ-5: LPG, natural gas, coal gas
 - MQ-6: LPG
 - MQ-7: carbon monoxide
