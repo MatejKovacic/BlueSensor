@@ -6,7 +6,7 @@ PCB dimension is 70mm x 55mm. Schematics is available in two PDF files (BlueSens
 
 Needed materials:
 - 1x Arduino Nano
-- 2 x MQ2-x gas sensors (
+- 2 x MQ2-x gas sensors*
 - 1 x DHT-22 (AM2302) humidity and temperature sensor
 - 2 x (max 4 x) DS12B20 temperature sensor (on a cable)
 - 1 x buzzer
@@ -22,6 +22,19 @@ PCB is designed to additionally connect:
 - 1 x 4.6k Ohm resistor
 
 However this hardware is not supported in a current code yet.
+
+MQ-x gas sensor are cheap sensors for detecting leakage of various gases: 
+- MQ-2: combustible gases
+- MQ-3: alcohol
+- MQ-4: CH4，natural gas
+- MQ-5: LPG, natural gas, coal gas
+- MQ-6: LPG
+- MQ-7: carbon monoxide
+- MQ-8: hydrogen
+- MQ-9: carbon monoxide and combustible gases
+- MQ-135: air quality sensor
+
+They have analog output and are not calibrated.
 
 ![BlueSensor v1.1](BlueSensor_v1.1.jpg)
 
