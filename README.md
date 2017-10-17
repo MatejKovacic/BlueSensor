@@ -61,4 +61,6 @@ When application is started, you can open URL which is printed in console:
 - for BlueSensor data from ttyUSB1: http://localhost:8081/, etc...
 - for SDS dust sensor data: http://localhost:8089/
 
+![Dust sensor data in a web app](DustSensor_graph.png)
+
 Arduino firmware for BlueSensor is available in a file *BlueSensor_plain_codeweek.ino*. Currently data from BlueSensor are printed in CSV form. Future version will use JSON formatting. Dust reader already uses JSON formatting.
