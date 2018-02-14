@@ -1,0 +1,89 @@
+#!/usr/bin/python
+# coding: utf-8
+
+# BlueSensor data reader for reading JSON data fro sensor via serial console (/dev/ttyUSB0,...)
+
+import sys, os
+import traceback
+import datetime, time
+import serial
+import json
+import random
+
+# Reopen sys.stdout with buffer size 0 (unbuffered)
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+if len(sys.argv) == 1:
+    sys.stderr.write('This application must be called with parameter specifying ID of a USB port where BlueSensor is conneccted.\n')
+    sys.stderr.write('For example: "read-serial.py 0" for reading from device connected to /dev/ttyUSB0.\n')
+    sys.exit()
+
+USBNUM = str(sys.argv[1])
+if (sys.argv[1].isdigit()):
+    USBPORT = "/dev/ttyUSB" + USBNUM
+else:
+    USBPORT = "/dev/ttyUSB0"
+
+if (len(sys.argv) > 2):
+    simulate = True
+else:
+    simulate = False
+
+if not simulate:
+    ser = serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+    sys.stderr.write('Reading JSON data from ' + USBPORT + '...\n')
+else:
+    ser = None
+    sys.stderr.write('Reading JSON data from simulated ' + USBPORT + '...\n')
+
+while True:
+    try:
+        if not simulate:
+            data_s = ser.readline().rstrip()
+        else:
+            data = {
+                "metadata": {
+                    "device_name": "Serial sensor",
+                    "device_id": "SER1",
+                    "device_location": "IJS",
+                    "sensors": {
+                        "gas1": ["Gas 1", "Gas 1", "raw value", "black"],
+                        "gas2": ["Gas 2", "Gas 2", "raw value", "green"],
+                        "humidity": ["Hum 1", "DHT-22", "%", "blue"],
+                        "temp1": ["Temp 1", "DHT-22", "°C", "orange"],
+                        "temp2": ["Temp 2", "DS18B20", "°C", "red"],
+                        "temp3": ["Temp 3", "DS18B20", "°C", "yellow"]
+                    }
+                },
+                "time": 0,
+                "data": {
+                    "gas1": [round(random.random(), 2), 0],
+                    "gas2": [round(random.random(), 2), 0],
+                    "humidity": [round(random.random()*100, 2), 100],
+                    "temp1": [round(random.random()*35, 2), 50],
+                    "temp2": [round(random.random()*35, 2), 50],
+                    "temp3": [round(random.random()*35, 2), 50]
+                }
+            }
+            data_s = json.dumps(data)
+
+        t = int((time.time() - time.altzone)*1000)
+
+        data = json.loads(data_s)
+        if data['time'] is None or data['time'] == 0:
+            data['time'] = t
+        data_s = json.dumps(data)
+
+        sys.stdout.write(data_s + '\n')
+
+        time.sleep(1) # wait 1 second
+    except KeyboardInterrupt:
+        sys.stderr.write('Quit!\n')
+        sys.exit()
+    except:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        exc = traceback.format_exception_only(exc_type, exc_obj)
+        f_name = sys._getframe().f_code.co_name
+        err = '{}({}): '.format(f_name, exc_tb.tb_lineno) + exc[-1].strip()
+        sys.stderr.write(err + '\n')
+        time.sleep(1) # wait 1 second
