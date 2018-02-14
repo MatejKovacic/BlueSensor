@@ -5,13 +5,35 @@
 
 import sys, os
 import traceback
-import datetime, time
+import datetime, time, pytz
+from pprint import pprint
 import serial
 import json
 import random
 
-# Reopen sys.stdout with buffer size 0 (unbuffered)
+tz = pytz.timezone('Europe/Ljubljana')
+va = [None]*6
+
+def time_now_ms():
+    tt = datetime.datetime.now(tz).timetuple()
+    now = time.mktime(tt) + 3600 # WTF?!
+    if tt.tm_isdst: now += 3600
+    return int(now)*1000
+
+def sim_value(n, max, fluc):
+    global va
+    plus = random.random() > 0.5
+    diff = random.random()*(max*fluc/100)
+    if va[n] is None: va[n] = max/2
+    if plus: va[n] += diff
+    else: va[n] -= diff
+    if va[n] > max: va[n] -= 2*diff
+    elif va[n] < 0: va[n] += 2*diff
+    return va[n]
+
+# Reopen stdout and stderr with buffer size 0 (unbuffered)
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 if len(sys.argv) == 1:
     sys.stderr.write('This application must be called with parameter specifying USB port.\n')
@@ -19,15 +41,12 @@ if len(sys.argv) == 1:
     sys.exit()
 
 USBNUM = str(sys.argv[1])
-if (sys.argv[1].isdigit()):
+if sys.argv[1].isdigit():
     USBPORT = "/dev/ttyUSB" + USBNUM
 else:
     USBPORT = "/dev/ttyUSB0"
 
-if (len(sys.argv) > 2):
-    simulate = True
-else:
-    simulate = False
+simulate = len(sys.argv) > 2
 
 if not simulate:
     ser = serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
@@ -46,14 +65,14 @@ while True:
            values.append('Raw sensor')
            values.append('RAW1')
            values.append('IJS')
-           values.append('Gas 1'); values.append(random.random())
-           values.append('Gas 2'); values.append(random.random())
-           values.append('Hum 1'); values.append(random.random()*100)
-           values.append('Temp 1'); values.append(random.random()*35)
-           values.append('Temp 2'); values.append(random.random()*35)
-           values.append('Temp 3'); values.append(random.random()*35)
+           values.append('Gas 1'); values.append(sim_value(0, 10, 20))
+           values.append('Gas 2'); values.append(sim_value(1, 10, 20))
+           values.append('Hum 1'); values.append(sim_value(2, 100, 5))
+           values.append('Temp 1'); values.append(sim_value(3, 50, 2))
+           values.append('Temp 2'); values.append(sim_value(4, 50, 2))
+           values.append('Temp 3'); values.append(sim_value(5, 50, 2))
 
-        t = int((time.time() - time.altzone)*1000)
+        t = time_now_ms()
 
         data = {
             "metadata": {
@@ -71,8 +90,8 @@ while True:
             },
             "time": t,
             "data": {
-                "gas1": [round(values[4], 2), 0],
-                "gas2": [round(values[6], 2), 0],
+                "gas1": [round(values[4], 2), 10],
+                "gas2": [round(values[6], 2), 10],
                 "humidity": [round(values[8], 2), 100],
                 "temp1": [round(values[10], 2), 50],
                 "temp2": [round(values[12], 2), 50],

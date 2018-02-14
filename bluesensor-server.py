@@ -86,16 +86,18 @@ def enque_output(out, queue):
 def reader(ioloop):
     while True:
         try:
-            cmd = [sys.executable, reader_py, sensor_name, '1']
+            cmd = [sys.executable, reader_py, sensor_name]
+            if simulate: cmd.append('simulate')
             # this subprocess creation with pipes works on Unix and Windows!
-            proc = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            proc = subprocess.Popen(cmd, bufsize=1, universal_newlines=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             q = Queue()
             t = Thread(target=enque_output, args=(proc.stdout, q))
             t.daemon = True; t.start()
 
             while True:
                 try:
-                    line = q.get_nowait() # get next line from subprocess
+                    line = q.get_nowait().strip() # get next line from subprocess
                 except:
                     yield gen.sleep(1) # wait 1 second
                     continue # no output yet
@@ -114,8 +116,9 @@ def reader(ioloop):
             print_exc(sys._getframe().f_code.co_name)
             yield gen.sleep(5) # wait 5 seconds
 
-# Reopen sys.stdout with buffer size 0 (unbuffered)
+# Reopen stdout and stderr with buffer size 0 (unbuffered)
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 if len(sys.argv) == 1:
     sys.stderr.write('This application must be called with parameters specifying reader and port number.\n')
@@ -146,6 +149,8 @@ else:
     sensor_name = str(sys.argv[2])
     port_id = int('808' + sensor_name) # set port number according to sensor number
 
+simulate = len(sys.argv) > 3
+
 STATIC_PATH = os.path.join(os.path.dirname(__file__), 'static')
 app = web.Application([
     (r"/", MainHandler),
@@ -154,7 +159,7 @@ app = web.Application([
 ])
 app.listen(port_id) # webserver listening TCP port
 
-sys.stdout.write('Starting Tornado web server...\n')
+sys.stdout.write('Starting Tornado web server with {}\n'.format(reader_py))
 sys.stdout.write('To connect, open http://localhost:' + str(port_id) + '/\n')
 ioloop = ioloop.IOLoop.current()
 ioloop.add_callback(reader, ioloop)

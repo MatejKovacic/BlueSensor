@@ -9,10 +9,31 @@
 
 import sys, os
 import traceback
-import datetime, time
+import datetime, time, pytz
+from pprint import pprint
 import serial
 import json
 import random
+
+tz = pytz.timezone('Europe/Ljubljana')
+va = [None]*2
+
+def time_now_ms():
+    tt = datetime.datetime.now(tz).timetuple()
+    now = time.mktime(tt) + 3600 # WTF?!
+    if tt.tm_isdst: now += 3600
+    return int(now)*1000
+
+def sim_value(n, max, fluc):
+    global va
+    plus = random.random() > 0.5
+    diff = random.random()*(max*fluc/100)
+    if va[n] is None: va[n] = max/2
+    if plus: va[n] += diff
+    else: va[n] -= diff
+    if va[n] > max: va[n] -= 2*diff
+    elif va[n] < 0: va[n] += 2*diff
+    return va[n]
 
 class SDS021_Reader:
     def __init__(self, inport, simulate=False):
@@ -60,10 +81,10 @@ class SDS021_Reader:
                     values = self.readValue()
                 else:
                     values = []
-                    values.append(random.random()*25)
-                    values.append(random.random()*50)
+                    values.append(sim_value(0, 25, 10))
+                    values.append(sim_value(1, 50, 10))
 
-                t = int((time.time() - time.altzone)*1000)
+                t = time_now_ms()
                 species[0].append(values[0])
                 species[1].append(values[1])
 
@@ -99,8 +120,9 @@ class SDS021_Reader:
                 sys.stderr.write(err + '\n')
                 time.sleep(1) # wait 1 second
 
-# Reopen sys.stdout with buffer size 0 (unbuffered)
+# Reopen stdout and stderr with buffer size 0 (unbuffered)
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 if len(sys.argv) == 1:
     sys.stderr.write('This application must be called with parameter specifying ID of a USB port where BlueSensor is conneccted.\n')
@@ -108,15 +130,12 @@ if len(sys.argv) == 1:
     sys.exit()
 
 USBNUM = str(sys.argv[1])
-if (sys.argv[1].isdigit()):
+if sys.argv[1].isdigit():
     USBPORT = "/dev/ttyUSB" + USBNUM
 else:
     USBPORT = "/dev/ttyUSB0"
 
-if (len(sys.argv) > 2):
-    simulate = True
-else:
-    simulate = False
+simulate = len(sys.argv) > 2
 
 reader = SDS021_Reader(USBPORT, simulate)
 while True:

@@ -5,13 +5,35 @@
 
 import sys, os
 import traceback
-import datetime, time
+import datetime, time, pytz
+from pprint import pprint
 import serial
 import json
 import random
 
-# Reopen sys.stdout with buffer size 0 (unbuffered)
+tz = pytz.timezone('Europe/Ljubljana')
+va = [None]*6
+
+def time_now_ms():
+    tt = datetime.datetime.now(tz).timetuple()
+    now = time.mktime(tt) + 3600 # WTF?!
+    if tt.tm_isdst: now += 3600
+    return int(now)*1000
+
+def sim_value(n, max, fluc):
+    global va
+    plus = random.random() > 0.5
+    diff = random.random()*(max*fluc/100)
+    if va[n] is None: va[n] = max/2
+    if plus: va[n] += diff
+    else: va[n] -= diff
+    if va[n] > max: va[n] -= 2*diff
+    elif va[n] < 0: va[n] += 2*diff
+    return va[n]
+
+# Reopen stdout and stderr with buffer size 0 (unbuffered)
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 if len(sys.argv) == 1:
     sys.stderr.write('This application must be called with parameter specifying ID of a USB port where BlueSensor is conneccted.\n')
@@ -19,15 +41,12 @@ if len(sys.argv) == 1:
     sys.exit()
 
 USBNUM = str(sys.argv[1])
-if (sys.argv[1].isdigit()):
+if sys.argv[1].isdigit():
     USBPORT = "/dev/ttyUSB" + USBNUM
 else:
     USBPORT = "/dev/ttyUSB0"
 
-if (len(sys.argv) > 2):
-    simulate = True
-else:
-    simulate = False
+simulate = len(sys.argv) > 2
 
 if not simulate:
     ser = serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
@@ -57,17 +76,17 @@ while True:
                 },
                 "time": 0,
                 "data": {
-                    "gas1": [round(random.random(), 2), 0],
-                    "gas2": [round(random.random(), 2), 0],
-                    "humidity": [round(random.random()*100, 2), 100],
-                    "temp1": [round(random.random()*35, 2), 50],
-                    "temp2": [round(random.random()*35, 2), 50],
-                    "temp3": [round(random.random()*35, 2), 50]
+                    "gas1": [round(sim_value(0, 10, 20), 2), 10],
+                    "gas2": [round(sim_value(1, 10, 20), 2), 10],
+                    "humidity": [round(sim_value(2, 100, 5), 2), 100],
+                    "temp1": [round(sim_value(3, 50, 2), 2), 50],
+                    "temp2": [round(sim_value(4, 50, 2), 2), 50],
+                    "temp3": [round(sim_value(5, 50, 2), 2), 50]
                 }
             }
             data_s = json.dumps(data)
 
-        t = int((time.time() - time.altzone)*1000)
+        t = time_now_ms()
 
         data = json.loads(data_s)
         if data['time'] is None or data['time'] == 0:
