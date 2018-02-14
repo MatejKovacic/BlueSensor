@@ -40,37 +40,47 @@
 <script language="javascript" type="text/javascript" src="/static/jquery.flot.time.js"></script>
 
 <script type="text/javascript">
+<!--
+    data = {
+        "metadata": {
+            "device_name": "Raw sensor",
+            "device_id": "RAW1",
+            "device_location": "IJS",
+            "sensors": {
+             // "key":      [ "Label", "Sensor name", "Unit",   "Color"  ]
+                "gas1":     [ "Gas 1",  "Gas 1",   "raw value", "black"  ],
+                "gas2":     [ "Gas 2",  "Gas 2",   "raw value", "green"  ],
+                "humidity": [ "Hum 1",  "DHT-22",  "%",         "blue"   ],
+                "temp1":    [ "Temp 1", "DHT-22",  "\\u00b0C",  "orange" ],
+                "temp2":    [ "Temp 2", "DS18B20", "\\u00b0C",  "red"    ],
+                "temp3":    [ "Temp 3", "DS18B20", "\\u00b0C",  "yellow" ]
+            }
+        },
+        "time": 1518648710000, // msec
+        "data": {
+         // "key":      [ "Value %.2f", "Max. value %d" ]
+            "gas1":     [  2.62,  10 ],
+            "gas2":     [  3.75,  10 ],
+            "humidity": [ 49.71, 100 ],
+            "temp1":    [ 25.07,  50 ],
+            "temp2":    [    26,  50 ],
+            "temp3":    [  23.1,  50 ]
+        }
+    }
+-->
     $(function () {
         var maxrecords = 300;
-        var ds = {
-            "gas1":     { label: "Gas 1", color: "#000000",  data: [] },
-            "gas2":     { label: "Gas 2", color: "#008000", data: [] },
-            "humidity": { label: "Humidity",           color: "#0000ff", data: [] },
-            "temp1":    { label: "Temperature 1",   color: "#ffa500", data: [] },
-            "temp2":    { label: "Temperature 2",   color: "#ff0000", data: [] },
-            "temp3":    { label: "Temperature 3",   color: "#ffff00", data: [] },
-            "pm10":     { label: "PM 10",  color: "#0000ff", data: [] },
-            "pm25":     { label: "PM 2.5",  color: "#ff0000", data: [] }
-        };
+        var ds = {};
+        // "key": { label: "Label", color: "#000000",  data: [] }
 
         var choiceContainer = $("#choices");
-        for (var key in ds) {
-            choiceContainer.append("<br><input type='checkbox' name='" +
-                key + "' checked='checked' id='id_" + key + "' style='display:none; font-size: small;'></input>" +
-                "<label for='id_" + key + "' id='lb_" + key + "' style='display:none; font-size: small;'>" +
-                ds[key].label + "</label>");
-        }
+        var container_exist = false;
 
         $("#title").html("BlueSensor (<i>waiting for data from USB...</i>)");
 
         wsock = new WebSocket("ws://" + document.location.host + "/data");
         wsock.onmessage = function (event) {
             var rs = JSON.parse(event.data);
-
-            for (var dkey in ds) {
-                $("#id_" + dkey).hide();
-                $("#lb_" + dkey).hide();
-            }
 
             var skey = "metadata";
             if (skey in rs) {
@@ -84,10 +94,20 @@
                         }
                         ds[dkey].label = rms[dkey][0];
                         ds[dkey].color = rms[dkey][3];
-                        $("#id_" + dkey).show();
-                        $("#lb_" + dkey).show();
                     }
                 }
+
+                if (!container_exist) {
+                    for (var key in ds) {
+                        choiceContainer.append("<input type='checkbox' name='" +
+                            key + "' checked='checked' id='id_" + 
+                            key + "' style='display:inline-block; font-size: small;'></input>" +
+                            "&nbsp;<label for='id_" + key + "' id='lb_" + 
+                            key + "' style='display:inline-block; font-size: small;'>" +
+                            ds[key].label + "</label><br>");
+                    }
+                }
+                container_exist = true;
 
                 skey = "device_name";
                 if (skey in rm) {
@@ -141,6 +161,7 @@
     });
 </script>
 </head>
+
 <body>
 <h1 id="title" style="color: #993300; text-align: center; font-family:verdana;">
 BlueSensor initialisation...
