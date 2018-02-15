@@ -40,11 +40,13 @@ if len(sys.argv) == 1:
     sys.stderr.write('For example: "read-serial.py 0" for reading from device connected to /dev/ttyUSB0.\n')
     sys.exit()
 
-USBNUM = str(sys.argv[1])
-if sys.argv[1].isdigit():
-    USBPORT = "/dev/ttyUSB" + USBNUM
-else:
-    USBPORT = "/dev/ttyUSB0"
+if sys.platform.startswith('win'):
+    DEVNAME = 'COM'
+elif sys.platform.startswith('darwin'):
+    DEVNAME = '/dev/tty.'
+else: # linux
+    DEVNAME = '/dev/ttyUSB'
+USBPORT = DEVNAME + sys.argv[1] # can be 'usbserialxxx' on Mac
 
 simulate = len(sys.argv) > 2
 
@@ -76,12 +78,12 @@ while True:
                 },
                 "time": 0,
                 "data": {
-                    "gas1": [round(sim_value(0, 10, 20), 2), 10],
-                    "gas2": [round(sim_value(1, 10, 20), 2), 10],
-                    "humidity": [round(sim_value(2, 100, 5), 2), 100],
-                    "temp1": [round(sim_value(3, 50, 2), 2), 50],
-                    "temp2": [round(sim_value(4, 50, 2), 2), 50],
-                    "temp3": [round(sim_value(5, 50, 2), 2), 50]
+                    "gas1": round(sim_value(0, 10, 20), 2),
+                    "gas2": round(sim_value(1, 10, 20), 2),
+                    "humidity": round(sim_value(2, 100, 5), 2),
+                    "temp1": round(sim_value(3, 50, 2), 2),
+                    "temp2": round(sim_value(4, 50, 2), 2),
+                    "temp3": round(sim_value(5, 50, 2), 2)
                 }
             }
             data_s = json.dumps(data)

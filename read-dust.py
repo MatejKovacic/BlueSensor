@@ -100,8 +100,8 @@ class SDS021_Reader:
                     },
                     "time": t,
                     "data": {
-                        "pm25": [round(values[0], 2), 25],
-                        "pm10": [round(values[1], 2), 50]
+                        "pm25": round(values[0], 2),
+                        "pm10": round(values[1], 2)
                     }
                 }
                 data_s = json.dumps(data)
@@ -129,11 +129,13 @@ if len(sys.argv) == 1:
     sys.stderr.write('For example: "read-serial.py 0" for reading from device connected to /dev/ttyUSB0.\n')
     sys.exit()
 
-USBNUM = str(sys.argv[1])
-if sys.argv[1].isdigit():
-    USBPORT = "/dev/ttyUSB" + USBNUM
-else:
-    USBPORT = "/dev/ttyUSB0"
+if sys.platform.startswith('win'):
+    DEVNAME = 'COM'
+elif sys.platform.startswith('darwin'):
+    DEVNAME = '/dev/tty.'
+else: # linux
+    DEVNAME = '/dev/ttyUSB'
+USBPORT = DEVNAME + sys.argv[1] # can be 'usbserialxxx' on Mac
 
 simulate = len(sys.argv) > 2
 

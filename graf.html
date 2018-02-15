@@ -58,13 +58,13 @@
         },
         "time": 1518648710000, // msec
         "data": {
-         // "key":      [ "Value %.2f", "Max. value %d" ]
-            "gas1":     [  2.62,  10 ],
-            "gas2":     [  3.75,  10 ],
-            "humidity": [ 49.71, 100 ],
-            "temp1":    [ 25.07,  50 ],
-            "temp2":    [    26,  50 ],
-            "temp3":    [  23.1,  50 ]
+         // "key": "Value %.2f"
+            "gas1":      2.62,
+            "gas2":      3.75,
+            "humidity": 49.71,
+            "temp1":    25.07,
+            "temp2":       26,
+            "temp3":     23.1
         }
     }
 -->
@@ -131,7 +131,7 @@
                     if (!ds[dkey]) {
                         ds[dkey] = { label: dkey, color: "#000000", data: [] };
                     }
-                    ds[dkey].data.push([t, rd[dkey][0]]);
+                    ds[dkey].data.push([t, rd[dkey]]);
                     if (ds[dkey].data.length > maxrecords) {
                         ds[dkey].data = ds[dkey].data.slice(ds[dkey].data.length - maxrecords, ds[dkey].data.length);
                     }

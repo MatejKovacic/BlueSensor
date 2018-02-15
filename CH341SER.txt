@@ -1,0 +1,8 @@
+USB Serial port driver for Arduino Nano
+
+Device description: USB-SERIAL CH340
+Hardware Ids:       USB\VID_1A86&PID_7523
+
+Driver Provider: wch.cn
+Driver Date:     08-Aug-14
+Driver Version:  3.4.2014.8

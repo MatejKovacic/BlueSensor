@@ -142,7 +142,7 @@ if not os.path.isfile(reader_py):
     sys.stderr.write('Error: file "{}" doesn\'t exist\n'.format(reader_py))
     sys.exit(2)
 
-if len(sys.argv) < 3 or not sys.argv[2].isdigit():
+if len(sys.argv) < 3:
     sys.stderr.write('Error: missing USB port number (for example from 0 to 3)\n')
     sys.exit(3)
 else:
