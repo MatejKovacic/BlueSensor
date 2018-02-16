@@ -97,7 +97,6 @@ while True:
 
         sys.stdout.write(data_s + '\n')
 
-        time.sleep(1) # wait 1 second
     except KeyboardInterrupt:
         sys.stderr.write('Quit!\n')
         sys.exit()
@@ -107,4 +106,3 @@ while True:
         f_name = sys._getframe().f_code.co_name
         err = '{}({}): '.format(f_name, exc_tb.tb_lineno) + exc[-1].strip()
         sys.stderr.write(err + '\n')
-        time.sleep(1) # wait 1 second
