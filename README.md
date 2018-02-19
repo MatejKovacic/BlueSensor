@@ -69,7 +69,8 @@ Arduino firmware for BlueSensor is available in a file *BlueSensor_JSON.ino*. Ou
 ## Out JSON format
 Data from sensor devices are presented in JSON format, which self-describes sensor device and sonnected sensors. Here is the example of it:
 
-`{
+``
+{
 	"metadata": {
 		"device_name": "BlueSensor",
 		"device_id": "BlueSensor1",
@@ -92,4 +93,5 @@ Data from sensor devices are presented in JSON format, which self-describes sens
 		"gas1": 296,
 		"gas2": 282
 	}
-}`
+}
+``
