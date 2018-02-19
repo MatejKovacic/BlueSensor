@@ -66,8 +66,8 @@ When application is started, you can open URL which is printed in console:
 
 Arduino firmware for BlueSensor is available in a file *BlueSensor_JSON.ino*. Output data from BlueSensor are printed in JSON format. Dust reader already uses JSON formatting.
 
-## Out JSON format
-Data from sensor devices are presented in JSON format, which self-describes sensor device and sonnected sensors. Here is the example of it:
+## Our JSON format
+Data from sensor devices are presented in JSON format, which self-describes sensor device and connected sensors. Here is the example of it:
 
 ```
 {
