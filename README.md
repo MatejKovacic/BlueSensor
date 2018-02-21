@@ -98,10 +98,22 @@ Data from sensor devices are presented in JSON format, which self-describes sens
 
 ## Installation
 First, clone this GIT repository to your local machine:
+
 `git clone https://github.com/MatejKovacic/BlueSensor`
 
 Then install dependencies:
+
 `sudo apt install python-tornado python-tz python-serial`
 
-Now you are ready to run tha application, for example:
-`python bluesensor-server.py read-serial 0`
+If you want to get the latest vesrion:
+```
+cd BlueSensor
+git pull
+```
+
+Now you are ready to run the application, for example, gathering data from BlueSensor connected to ttyUSB0:
+
+```
+cd BlueSensor
+python bluesensor-server.py read-serial 0
+```
