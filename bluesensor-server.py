@@ -19,6 +19,8 @@ from threading import Thread
 from multiprocessing.queues import Queue, Empty
 from collections import namedtuple, deque
 
+DB_SAVE = 30 # seconds
+
 def dump(obj, detailed=False):
     sys.stdout.write('obj.type = {}\n'.format(type(obj)))
     for attr in dir(obj):
@@ -120,7 +122,28 @@ def reader(ioloop):
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
-if len(sys.argv) == 1:
+database = False; db_save = DB_SAVE
+
+argv = []; vf = False
+for arg in sys.argv:
+    if re.match(r'^-', arg) or vf:
+        sys.stderr.write('Processing {}\n'.format(arg))
+        if re.match(r'--data-log', arg):
+            database = True
+            vf = True
+        elif vf:
+            try:
+                db_save = int(arg)
+            except ValueError:
+                db_save = DB_SAVE
+            vf = False
+        else:
+            sys.stderr.write('Error: unknown argument \'{}\'\n'.format(arg))
+            vf = False
+    else:
+        argv.append(arg)
+
+if len(argv) == 1:
     sys.stderr.write('This application must be called with parameters specifying reader and port number.\n')
     sys.stderr.write('For example:\n')
     sys.stderr.write('$ python bluesensor-server.py read-raw-serial 0\n')
@@ -129,12 +152,12 @@ if len(sys.argv) == 1:
     sys.stderr.write('  for reading data from dust sensor connected to ttyUSB1\n')
     sys.exit(1)
 
-sensor_name = str(sys.argv[1])
-if re.match('read-dust', sensor_name):
+sensor_name = str(argv[1])
+if re.match(r'read-dust', sensor_name):
     reader_py = os.path.join(os.path.dirname(__file__), 'read-dust.py')
-elif re.match('read-raw-serial', sensor_name):
+elif re.match(r'read-raw-serial', sensor_name):
     reader_py = os.path.join(os.path.dirname(__file__), 'read-raw-serial.py')
-#elif re.match('read-serial', sensor_name):
+#elif re.match(r'read-serial', sensor_name):
 else: # default
     reader_py = os.path.join(os.path.dirname(__file__), 'read-serial.py')
 
@@ -142,14 +165,14 @@ if not os.path.isfile(reader_py):
     sys.stderr.write('Error: file "{}" doesn\'t exist\n'.format(reader_py))
     sys.exit(2)
 
-if len(sys.argv) < 3:
+if len(argv) < 3:
     sys.stderr.write('Error: missing USB port number (for example from 0 to 3)\n')
     sys.exit(3)
 else:
-    sensor_name = str(sys.argv[2])
+    sensor_name = str(argv[2])
     port_id = int('808' + sensor_name) # set port number according to sensor number
 
-simulate = len(sys.argv) > 3
+simulate = len(argv) > 3
 
 STATIC_PATH = os.path.join(os.path.dirname(__file__), 'static')
 app = web.Application([
