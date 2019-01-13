@@ -16,10 +16,12 @@ import json
 from tornado import ioloop, gen, websocket, web
 import subprocess
 from threading import Thread
-from multiprocessing.queues import Queue, Empty
-from collections import namedtuple, deque
+from multiprocessing.queues import Queue
+from collections import deque
 
-DB_SAVE = 30 # seconds
+import database as db
+
+DB_SAVE = 5 # every <n> sensor reports
 
 def dump(obj, detailed=False):
     sys.stdout.write('obj.type = {}\n'.format(type(obj)))
@@ -76,6 +78,13 @@ def send_update(measurement):
                 DataHandler.clients.remove(client)
             except: pass
 
+@gen.coroutine
+def update_db(sensor, data):
+    try:
+        print('Inserting data into db')
+        db.dbInsert(sensor, data)
+    except: pass
+
 # async thread for reading subprocess' stdout
 def enque_output(out, queue):
     try:
@@ -97,6 +106,7 @@ def reader(ioloop):
             t = Thread(target=enque_output, args=(proc.stdout, q))
             t.daemon = True; t.start()
 
+            tick = 1
             while True:
                 try:
                     line = q.get_nowait().strip() # get next line from subprocess
@@ -109,12 +119,14 @@ def reader(ioloop):
                     measurement = json.loads(line)
                     #print(measurement)
                     ioloop.add_callback(send_update, measurement)
+                    if db_use and (tick % db_save) == 0:
+                        ioloop.add_callback(update_db, USBPORT, line)
+                    tick += 1
                 except:
                     print_exc(sys._getframe().f_code.co_name, 'invalid JSON: ')
                     yield gen.sleep(1) # wait 1 second
                     continue
         except:
-            traceback.print_exc()
             print_exc(sys._getframe().f_code.co_name)
             yield gen.sleep(5) # wait 5 seconds
 
@@ -122,18 +134,19 @@ def reader(ioloop):
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
-database = False; db_save = DB_SAVE
+db_use = False; db_save = DB_SAVE
 
 argv = []; vf = False
 for arg in sys.argv:
     if re.match(r'^-', arg) or vf:
-        sys.stderr.write('Processing {}\n'.format(arg))
         if re.match(r'--data-log', arg):
-            database = True
+            db_use = True
             vf = True
         elif vf:
             try:
                 db_save = int(arg)
+                if db_save <= 0:
+                    db_save = DB_SAVE
             except ValueError:
                 db_save = DB_SAVE
             vf = False
@@ -172,6 +185,14 @@ else:
     sensor_name = str(argv[2])
     port_id = int('808' + sensor_name) # set port number according to sensor number
 
+if sys.platform.startswith('win'):
+    DEVNAME = 'COM'
+elif sys.platform.startswith('darwin'):
+    DEVNAME = '/dev/tty.'
+else: # linux
+    DEVNAME = '/dev/ttyUSB'
+USBPORT = DEVNAME + sensor_name # can be 'usbserialxxx' on Mac
+
 simulate = len(argv) > 3
 
 STATIC_PATH = os.path.join(os.path.dirname(__file__), 'static')
@@ -182,7 +203,10 @@ app = web.Application([
 ])
 app.listen(port_id) # webserver listening TCP port
 
-sys.stdout.write('Starting Tornado web server with {}\n'.format(reader_py))
+if db_use:
+    db_use = db.dbOpen()
+
+sys.stdout.write('Starting Sensor web server with {}\n'.format(reader_py))
 sys.stdout.write('To connect, open http://localhost:' + str(port_id) + '/\n')
 ioloop = ioloop.IOLoop.current()
 ioloop.add_callback(reader, ioloop)
