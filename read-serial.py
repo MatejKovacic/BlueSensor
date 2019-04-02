@@ -14,6 +14,12 @@ import random
 tz = pytz.timezone('Europe/Ljubljana')
 va = [None]*6
 
+def print_exc(f_name, msg=''):
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    exc = traceback.format_exception_only(exc_type, exc_obj)
+    err = '{}({}): {}'.format(f_name, exc_tb.tb_lineno, msg) + exc[-1].strip()
+    sys.stderr.write(err + '\n')
+
 def time_now_ms():
     tt = datetime.datetime.now(tz).timetuple()
     now = time.mktime(tt) + 3600 # WTF?!
@@ -51,7 +57,11 @@ USBPORT = DEVNAME + sys.argv[1] # can be 'usbserialxxx' on Mac
 simulate = len(sys.argv) > 2
 
 if not simulate:
-    ser = serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+    try:
+        ser = serial.Serial(port=USBPORT, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+    except:
+        print_exc(sys._getframe().f_code.co_name)
+        sys.exit(1)
     sys.stderr.write('Reading JSON data from ' + USBPORT + '...\n')
 else:
     ser = None
@@ -97,12 +107,10 @@ while True:
 
         sys.stdout.write(data_s + '\n')
 
+        time.sleep(1) # wait 1 second
     except KeyboardInterrupt:
         sys.stderr.write('Quit!\n')
-        sys.exit()
+        sys.exit(0)
     except:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        exc = traceback.format_exception_only(exc_type, exc_obj)
-        f_name = sys._getframe().f_code.co_name
-        err = '{}({}): '.format(f_name, exc_tb.tb_lineno) + exc[-1].strip()
-        sys.stderr.write(err + '\n')
+        print_exc(sys._getframe().f_code.co_name)
+        time.sleep(1) # wait 1 second

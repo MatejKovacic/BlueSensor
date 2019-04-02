@@ -18,6 +18,12 @@ import random
 tz = pytz.timezone('Europe/Ljubljana')
 va = [None]*2
 
+def print_exc(f_name, msg=''):
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    exc = traceback.format_exception_only(exc_type, exc_obj)
+    err = '{}({}): {}'.format(f_name, exc_tb.tb_lineno, msg) + exc[-1].strip()
+    sys.stderr.write(err + '\n')
+
 def time_now_ms():
     tt = datetime.datetime.now(tz).timetuple()
     now = time.mktime(tt) + 3600 # WTF?!
@@ -39,7 +45,11 @@ class SDS021_Reader:
     def __init__(self, inport, simulate=False):
         self.simulate = simulate
         if not self.simulate:
-            self.serial = serial.Serial(port=inport, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+            try:
+                self.serial = serial.Serial(port=inport, baudrate=9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+            except:
+                print_exc(sys._getframe().f_code.co_name)
+                sys.exit(1)
             sys.stderr.write('Reading DUST data from ' + inport + '...\n')
         else:
             self.serial = None
@@ -111,13 +121,9 @@ class SDS021_Reader:
                 time.sleep(1) # wait 1 second
             except KeyboardInterrupt:
                 sys.stderr.write('Quit!\n')
-                sys.exit()
+                sys.exit(0)
             except:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                exc = traceback.format_exception_only(exc_type, exc_obj)
-                f_name = sys._getframe().f_code.co_name
-                err = '{}({}): '.format(f_name, exc_tb.tb_lineno) + exc[-1].strip()
-                sys.stderr.write(err + '\n')
+                print_exc(sys._getframe().f_code.co_name)
                 time.sleep(1) # wait 1 second
 
 # Reopen stdout and stderr with buffer size 0 (unbuffered)
