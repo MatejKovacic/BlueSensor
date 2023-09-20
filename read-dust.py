@@ -23,6 +23,7 @@ def print_exc(f_name, msg=''):
     exc = traceback.format_exception_only(exc_type, exc_obj)
     err = '{}({}): {}'.format(f_name, exc_tb.tb_lineno, msg) + exc[-1].strip()
     sys.stderr.write(err + '\n')
+    sys.stderr.flush()
 
 def time_now_ms():
     tt = datetime.datetime.now(tz).timetuple()
@@ -51,9 +52,11 @@ class SDS021_Reader:
                 print_exc(sys._getframe().f_code.co_name)
                 sys.exit(1)
             sys.stderr.write('Reading DUST data from ' + inport + '...\n')
+            sys.stderr.flush()
         else:
             self.serial = None
             sys.stderr.write('Reading DUST data from simulated ' + inport + '...\n')
+            sys.stderr.flush()
 
     def readValue(self):
         step = 0
@@ -117,22 +120,25 @@ class SDS021_Reader:
                 data_s = json.dumps(data)
 
                 sys.stdout.write(data_s + '\n')
+                sys.stdout.flush()
 
                 time.sleep(1) # wait 1 second
             except KeyboardInterrupt:
                 sys.stderr.write('Quit!\n')
+                sys.stderr.flush()
                 sys.exit(0)
             except:
                 print_exc(sys._getframe().f_code.co_name)
                 time.sleep(1) # wait 1 second
 
-# Reopen stdout and stderr with buffer size 0 (unbuffered)
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+# Reopen stdout and stderr with buffer size 0 (unbuffered) - only in python 2.7
+#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+#sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 if len(sys.argv) == 1:
     sys.stderr.write('This application must be called with parameter specifying ID of a USB port where BlueSensor is conneccted.\n')
     sys.stderr.write('For example: "read-serial.py 0" for reading from device connected to /dev/ttyUSB0.\n')
+    sys.stderr.flush()
     sys.exit()
 
 if sys.platform.startswith('win'):

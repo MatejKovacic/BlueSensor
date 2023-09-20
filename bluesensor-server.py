@@ -16,7 +16,7 @@ import json
 from tornado import ioloop, gen, websocket, web
 import subprocess
 from threading import Thread
-from multiprocessing.queues import Queue
+from multiprocessing import queues, get_context
 from collections import deque
 
 import database as db
@@ -25,16 +25,19 @@ DB_SAVE = 5 # every <n> sensor reports
 
 def dump(obj, detailed=False):
     sys.stdout.write('obj.type = {}\n'.format(type(obj)))
+    sys.stdout.flush()
     for attr in dir(obj):
         try:
             value = getattr(obj, attr)
             sys.stdout.write('obj.{} = {}\n'.format(attr, value))
+            sys.stdout.flush()
             if detailed and str(value).startswith('<'):
                 sys.stdout.write('  '); n = 0
                 for oattr in dir(value):
                     if n > 0: sys.stdout.write(' ')
                     sys.stdout.write('{}'.format(oattr)); n += 1
                 sys.stdout.write('\n')
+                sys.stdout.flush()
         except: pass
 
 def print_exc(f_name, msg=''):
@@ -42,6 +45,7 @@ def print_exc(f_name, msg=''):
     exc = traceback.format_exception_only(exc_type, exc_obj)
     err = '{}({}): {}'.format(f_name, exc_tb.tb_lineno, msg) + exc[-1].strip()
     sys.stderr.write(err + '\n')
+    sys.stderr.flush()
 
 class MainHandler(web.RequestHandler):
     @gen.coroutine
@@ -51,6 +55,7 @@ class MainHandler(web.RequestHandler):
             with open(graf_template) as f:
                 html = f.read()
             self.write(html)
+            self.flush()
         except:
             print_exc(sys._getframe().f_code.co_name, graf_template + ': ')
 
@@ -81,7 +86,7 @@ def send_update(measurement):
 @gen.coroutine
 def update_db(sensor, data):
     try:
-        print('Inserting data into db')
+        print('Inserting data into db', flush=True)
         db.dbInsert(sensor, data)
     except: pass
 
@@ -102,7 +107,7 @@ def reader(ioloop):
             # this subprocess creation with pipes works on Unix and Windows!
             proc = subprocess.Popen(cmd, bufsize=1, universal_newlines=True,
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            q = Queue()
+            q = queues.Queue(ctx=get_context())
             t = Thread(target=enque_output, args=(proc.stdout, q))
             t.daemon = True; t.start()
 
@@ -114,10 +119,10 @@ def reader(ioloop):
                     yield gen.sleep(1) # wait 1 second
                     continue # no output yet
 
-                print('Got JSON: %r' % line)
+                print('Got JSON: %r' % line, flush=True)
                 try:
                     measurement = json.loads(line)
-                    #print(measurement)
+                    #print(measurement, flush=True)
                     ioloop.add_callback(send_update, measurement)
                     if db_use and (tick % db_save) == 0:
                         ioloop.add_callback(update_db, USBPORT, line)
@@ -130,9 +135,9 @@ def reader(ioloop):
             print_exc(sys._getframe().f_code.co_name)
             yield gen.sleep(5) # wait 5 seconds
 
-# Reopen stdout and stderr with buffer size 0 (unbuffered)
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+# Reopen stdout and stderr with buffer size 0 (unbuffered) - only in python 2.7
+#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+#sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 db_use = False; db_save = DB_SAVE
 
@@ -152,6 +157,7 @@ for arg in sys.argv:
             vf = False
         else:
             sys.stderr.write('Error: unknown argument \'{}\'\n'.format(arg))
+            sys.stderr.flush()
             vf = False
     else:
         argv.append(arg)
@@ -163,6 +169,7 @@ if len(argv) == 1:
     sys.stderr.write('  for reading data from BlueSensor connected to ttyUSB0\n')
     sys.stderr.write('$ python bluesensor-server.py read-dust 1\n')
     sys.stderr.write('  for reading data from dust sensor connected to ttyUSB1\n')
+    sys.stderr.flush()
     sys.exit(1)
 
 sensor_name = str(argv[1])
@@ -176,10 +183,12 @@ else: # default
 
 if not os.path.isfile(reader_py):
     sys.stderr.write('Error: file "{}" doesn\'t exist\n'.format(reader_py))
+    sys.stderr.flush()
     sys.exit(2)
 
 if len(argv) < 3:
     sys.stderr.write('Error: missing USB port number (for example from 0 to 3)\n')
+    sys.stderr.flush()
     sys.exit(3)
 else:
     sensor_name = str(argv[2])
@@ -208,6 +217,7 @@ if db_use:
 
 sys.stdout.write('Starting Sensor web server with {}\n'.format(reader_py))
 sys.stdout.write('To connect, open http://localhost:' + str(port_id) + '/\n')
+sys.stdout.flush()
 ioloop = ioloop.IOLoop.current()
 ioloop.add_callback(reader, ioloop)
 ioloop.start()
