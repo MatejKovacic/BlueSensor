@@ -51,9 +51,9 @@ First you need to install Tornado Python web server. Od Ubuntu/Debian based syst
 
 Then you connect BlueSensor or SDS dust reader to USB port and run:
 - for reading data from BlueSensor connected to ttyUSB0:
-```python bluesensor-server.py read-serial 0```
+```python3 bluesensor-server.py read-serial 0```
 - for reading data from SDS dust reader (dust reader should always be connected to ttyUSB0):
-```python bluesensor-server.py read-dust```
+```python3 bluesensor-server.py read-dust```
 
 ![BlueSensor data in a web app](BlueSensor_graph.png)
 
@@ -65,6 +65,23 @@ When application is started, you can open URL which is printed in console:
 ![Dust sensor data in a web app](DustSensor.png)
 
 Arduino firmware for BlueSensor is available in a file *BlueSensor_JSON.ino*. Output data from BlueSensor are printed in JSON format. Dust reader already uses JSON formatting.
+
+### Note on running the software on Ubuntu 23.04
+
+In Ubuntu 23.04 the Python application is reporting an error:
+```
+Got JSON: "<module>(63): serial.serialutil.SerialException: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'"
+```
+However, if you check with `lsusb`, you will see that the device is connected:
+```
+Bus 005 Device 059: ID 1a86:7523 QinHeng Electronics CH340 serial converter
+```
+... and also attached to ttyUSB0:
+```
+sudo dmesg | grep ttyUSB*
+[299102.079653] usb 5-2: ch341-uart converter now attached to ttyUSB0
+```
+The solution: `sudo apt remove brltty` (this removes Braille display support).
 
 ## Our JSON format
 Data from sensor devices are presented in JSON format, which self-describes sensor device and connected sensors. Here is the example of it:
