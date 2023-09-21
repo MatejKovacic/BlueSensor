@@ -1,8 +1,12 @@
 # BlueSensor
 Arduino based device for temperature, air humidity and gas concentration measurment.
 
+<img src="koncna_naprava4.jpg "width="250">
+
 ## Hardware
 PCB dimension is 70mm x 55mm. Schematics is available in two PDF files (BlueSensor_v1.1_PCB_top.pdf and BlueSensor_v1.1_PCB_top_miror.pdf). PCB can be manufactured with [chemo transfer method](https://www.youtube.com/watch?v=zZRHaZjGWq4) invented by Volk Darko. In that case mirror image should be used. Schematics have been developed by Darko Volk.
+
+<img src="koncna_naprava1.jpg "width="250">
 
 Needed materials:
 - 1 x Arduino Nano
@@ -16,12 +20,16 @@ Needed materials:
 - 1 x 100 Ohm resistor
 - 1 x battery case (for 4 x AAA batteries)
 
+<img src="koncna_naprava2.jpg "width="250">
+
 PCB is designed to additionally connect:
 - 1 x HC-05 Bluetooth module
 - 1 x 2k Ohm resistor
 - 1 x 4.6k Ohm resistor
 
 However, in future versions Bluetooth will not be supported.
+
+<img src="koncna_naprava3.jpg "width="250">
 
 MQ-x gas sensor are cheap sensors for detecting leakage of various gases: 
 - MQ-2: combustible gases
