@@ -1,7 +1,9 @@
 # BlueSensor
 Arduino based device for temperature, air humidity and gas concentration measurment.
 
-<img src="koncna_naprava4.jpg" width="250"/>
+<img src="koncna_naprava4.jpg" width="350"/>
+
+<img src="Bluesensor_graphs.png" width="350"/>
 
 ## Hardware
 PCB dimension is 70mm x 55mm. Schematics is available in two PDF files (BlueSensor_v1.1_PCB_top.pdf and BlueSensor_v1.1_PCB_top_miror.pdf). PCB can be manufactured with [chemo transfer method](https://www.youtube.com/watch?v=zZRHaZjGWq4) invented by Volk Darko. In that case mirror image should be used. Schematics have been developed by Darko Volk.
